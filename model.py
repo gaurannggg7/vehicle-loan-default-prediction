@@ -5,7 +5,9 @@ from xgboost import XGBClassifier
 from sklearn.metrics import classification_report, roc_auc_score, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
+from lightgbm import LGBMClassifier
+import json
+from datetime import datetime
 # Import the preprocessor function we built earlier
 from preprocess import load_and_preprocess_data
 
@@ -74,3 +76,30 @@ print("\nConfusion Matrix:")
 print(confusion_matrix(y_val, xgb_preds))
 print("\nClassification Report:")
 print(classification_report(y_val, xgb_preds))
+
+
+# LightGBM model
+lgbm = LGBMClassifier(
+    scale_pos_weight=scale_pos_weight,
+    n_estimators=100,
+    learning_rate=0.05,
+    random_state=42
+)
+lgbm.fit(X_train, y_train)
+lgbm_preds = lgbm.predict_proba(X_val)[:, 1]
+lgbm_auc = roc_auc_score(y_val, lgbm_preds)
+print(f"LightGBM ROC-AUC: {lgbm_auc:.4f}")
+# Log model performance for monitoring
+model_log = {
+    "timestamp": datetime.now().isoformat(),
+    "logistic_regression_auc": round(lr_auc, 4),
+    "xgboost_auc": round(xgb_auc, 4),
+    "lightgbm_auc": round(lgbm_auc, 4),
+    "val_size": len(y_val),
+    "default_rate_val": round(y_val.mean(), 4)
+}
+
+with open("model_performance_log.json", "w") as f:
+    json.dump(model_log, f, indent=2)
+
+print("Model performance logged to model_performance_log.json")
