@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-06-08T16:24:02.208742",
+  "logistic_regression_auc": 0.6001,
+  "xgboost_auc": 0.6238,
+  "lightgbm_auc": 0.6233,
+  "val_size": 46631,
+  "default_rate_val": 0.2171
+}

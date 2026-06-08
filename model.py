@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from lightgbm import LGBMClassifier
 import json
 from datetime import datetime
+
 # Import the preprocessor function we built earlier
 from preprocess import load_and_preprocess_data
 
@@ -77,19 +78,32 @@ print(confusion_matrix(y_val, xgb_preds))
 print("\nClassification Report:")
 print(classification_report(y_val, xgb_preds))
 
-
-# LightGBM model
+# -------------------------------------------------------------
+# MODEL 3: LightGBM (Challenger Model)
+# -------------------------------------------------------------
+print("\n--- Training LightGBM Classifier ---")
 lgbm = LGBMClassifier(
-    scale_pos_weight=scale_pos_weight,
+    scale_pos_weight=scale_weight,
     n_estimators=100,
     learning_rate=0.05,
     random_state=42
 )
-lgbm.fit(X_train, y_train)
-lgbm_preds = lgbm.predict_proba(X_val)[:, 1]
+# Train using the scaled data for consistency
+lgbm.fit(X_train_scaled, y_train)
+lgbm_preds = lgbm.predict_proba(X_val_scaled)[:, 1]
+
+print("\n[LightGBM Results]")
 lgbm_auc = roc_auc_score(y_val, lgbm_preds)
-print(f"LightGBM ROC-AUC: {lgbm_auc:.4f}")
-# Log model performance for monitoring
+print(f"ROC-AUC Score: {lgbm_auc:.4f}")
+
+# -------------------------------------------------------------
+# LOGGING: Save metrics for model monitoring
+# -------------------------------------------------------------
+# 1. Save the baseline AUC scores into variables
+lr_auc = roc_auc_score(y_val, lr_probs)
+xgb_auc = roc_auc_score(y_val, xgb_probs)
+
+# 2. Log model performance for monitoring
 model_log = {
     "timestamp": datetime.now().isoformat(),
     "logistic_regression_auc": round(lr_auc, 4),
@@ -99,7 +113,7 @@ model_log = {
     "default_rate_val": round(y_val.mean(), 4)
 }
 
-with open("model_performance_log.json", "w") as f:
+with open("data/model_performance_log.json", "w") as f:
     json.dump(model_log, f, indent=2)
 
-print("Model performance logged to model_performance_log.json")
+print("\n✅ Model performance logged to data/model_performance_log.json")
